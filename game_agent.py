@@ -7,6 +7,9 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import random
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 class Timeout(Exception):
@@ -129,6 +132,7 @@ class CustomPlayer:
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
+            max_score = self.minimax(game, 1)
             pass
 
         except Timeout:
@@ -136,7 +140,7 @@ class CustomPlayer:
             pass
 
         # Return the best move from the last completed search iteration
-        raise NotImplementedError
+        return max_score[1]
 
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
@@ -173,7 +177,74 @@ class CustomPlayer:
             raise Timeout()
 
         # TODO: finish this function!
-        raise NotImplementedError
+        # if maximizing_player:
+        #     return self.max_value(game)
+        # else:
+
+        return self.min_value(game, depth)
+
+
+    def min_value(self, game, depth):
+        if depth <= 0: return self.get_player_utility(game)
+        else: depth = depth - 1
+
+        if game.is_winner(game.active_player) or len(game.get_legal_moves(game.active_player)) == 0:
+            logging.debug("\n%s" % game.to_string())
+            return self.get_player_utility(game)
+
+        v = float("inf")
+        result = (v, None)
+
+        for a in game.get_legal_moves():
+            # return self.min(v, game.forecast_move(a).utility(game.active_player))
+            minimum_utility_for_action = self.min(result, self.max_value(self.result(game, a), depth))
+            logging.debug("\nPlayer: %s on depth: %d with minimum_utility_for_action: %s for action: %s" % (game.active_player, depth, minimum_utility_for_action, a))
+            result = minimum_utility_for_action
+        return result
+
+    def get_player_utility(self, game):
+        return (game.utility(game.active_player), game.get_player_location(game.get_opponent(game.active_player)))
+
+    def max_value(self, game, depth):
+        if depth <= 0: return self.get_player_utility(game)
+        else: depth = depth - 1
+
+        if game.is_winner(game.active_player) or len(game.get_legal_moves(game.active_player)) == 0:
+            logging.debug("\n%s" % game.to_string())
+            return self.get_player_utility(game)
+        v = float("-inf")
+        result = (v, None)
+        for a in game.get_legal_moves():
+            maximum_utility_for_action = self.max(result, self.min_value(self.result(game, a), depth))
+            logging.debug("Player: %s on depth: %d with maximum_utility_for_action: %s for action: %s" % (game.active_player, depth, maximum_utility_for_action, a))
+            result = maximum_utility_for_action
+        return result
+
+    def result(self, game, position):
+        # make move and change active player
+        return game.forecast_move(position)
+
+    def max(self, tuple1, tuple2):
+        """
+        Return maximum utility for current player
+        :param e1: tuple of utility value and action(move). Eg: (0, (1,0)) 
+        :param e2: utility value
+        :return: tuple of maximum utility and corresponding action 
+        """
+        if tuple1[0] >= tuple2[0]:
+            return tuple1
+        return tuple2
+
+    def min(self, tuple1, tuple2):
+        """
+        Return maximum utility for current player
+        :param tuple1: utility value 
+        :param tuple2: utility value
+        :return: maximum utility 
+        """
+        if tuple1[0] >= tuple2[0]:
+            return tuple2
+        return tuple1
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
