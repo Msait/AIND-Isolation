@@ -237,8 +237,27 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
+        logging.debug("\n%s" % game.to_string())
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        if depth <= 0 or game.is_winner(game.active_player) or game.is_loser(game.active_player):
+            logging.debug("\nScore %s for %s on depth %d" % (self.score(game, self), self, depth))
+            return (self.score(game, self), (None, None))
+
+        move = None
+        if maximizing_player:
+            v = float("-inf")
+            for a in game.get_legal_moves():
+                logging.debug("\nMove (%s, %s)" % a)
+                updated_v = max(v, self.minimax(game.forecast_move(a), depth - 1, False)[0])
+                if updated_v > v:
+                    v, move = updated_v, a
+        else:
+            v = float("inf")
+            for a in game.get_legal_moves():
+                updated_v = min(v, self.minimax(game.forecast_move(a), depth - 1, True)[0])
+                if updated_v < v:
+                    v, move = updated_v, a
+
+        return (v, move)
