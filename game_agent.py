@@ -9,7 +9,7 @@ relative strength using tournament.py and include the results in your report.
 import random
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Timeout(Exception):
@@ -173,78 +173,31 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
+        logging.debug("\n%s" % game.to_string())
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        # if maximizing_player:
-        #     return self.max_value(game)
-        # else:
+        if depth <= 0 or game.is_winner(game.active_player) or game.is_loser(game.active_player):
+            logging.debug("\nScore %s for %s on depth %d" % (self.score(game, self), self, depth))
+            return (self.score(game, self), (None, None))
 
-        return self.min_value(game, depth)
+        move = None
+        if maximizing_player:
+            v = float("-inf")
+            for a in game.get_legal_moves():
+                logging.debug("\nMove (%s, %s)" % a)
+                updated_v = max(v, self.minimax(game.forecast_move(a), depth - 1, False)[0])
+                if updated_v > v:
+                    v, move = updated_v, a
+        else:
+            v = float("inf")
+            for a in game.get_legal_moves():
+                updated_v = min(v, self.minimax(game.forecast_move(a), depth - 1, True)[0])
+                if updated_v < v:
+                    v, move = updated_v, a
 
+        return (v, move)
 
-    def min_value(self, game, depth):
-        if depth <= 0: return self.get_player_utility(game)
-        else: depth = depth - 1
-
-        if game.is_winner(game.active_player) or len(game.get_legal_moves(game.active_player)) == 0:
-            logging.debug("\n%s" % game.to_string())
-            return self.get_player_utility(game)
-
-        v = float("inf")
-        result = (v, None)
-
-        for a in game.get_legal_moves():
-            # return self.min(v, game.forecast_move(a).utility(game.active_player))
-            minimum_utility_for_action = self.min(result, self.max_value(self.result(game, a), depth))
-            logging.debug("\nPlayer: %s on depth: %d with minimum_utility_for_action: %s for action: %s" % (game.active_player, depth, minimum_utility_for_action, a))
-            result = minimum_utility_for_action
-        return result
-
-    def get_player_utility(self, game):
-        return (game.utility(game.active_player), game.get_player_location(game.get_opponent(game.active_player)))
-
-    def max_value(self, game, depth):
-        if depth <= 0: return self.get_player_utility(game)
-        else: depth = depth - 1
-
-        if game.is_winner(game.active_player) or len(game.get_legal_moves(game.active_player)) == 0:
-            logging.debug("\n%s" % game.to_string())
-            return self.get_player_utility(game)
-        v = float("-inf")
-        result = (v, None)
-        for a in game.get_legal_moves():
-            maximum_utility_for_action = self.max(result, self.min_value(self.result(game, a), depth))
-            logging.debug("Player: %s on depth: %d with maximum_utility_for_action: %s for action: %s" % (game.active_player, depth, maximum_utility_for_action, a))
-            result = maximum_utility_for_action
-        return result
-
-    def result(self, game, position):
-        # make move and change active player
-        return game.forecast_move(position)
-
-    def max(self, tuple1, tuple2):
-        """
-        Return maximum utility for current player
-        :param e1: tuple of utility value and action(move). Eg: (0, (1,0)) 
-        :param e2: utility value
-        :return: tuple of maximum utility and corresponding action 
-        """
-        if tuple1[0] >= tuple2[0]:
-            return tuple1
-        return tuple2
-
-    def min(self, tuple1, tuple2):
-        """
-        Return maximum utility for current player
-        :param tuple1: utility value 
-        :param tuple2: utility value
-        :return: maximum utility 
-        """
-        if tuple1[0] >= tuple2[0]:
-            return tuple2
-        return tuple1
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
