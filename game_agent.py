@@ -173,13 +173,13 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
-        logging.debug("\n%s" % game.to_string())
+        # logging.debug("\n%s" % game.to_string())
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
         if depth <= 0 or game.is_winner(game.active_player) or game.is_loser(game.active_player):
             logging.debug("\nScore %s for %s on depth %d" % (self.score(game, self), self, depth))
-            return (self.score(game, self), (None, None))
+            return (self.score(game, self), (-1, -1))
 
         move = None
         if maximizing_player:
@@ -237,7 +237,7 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
-        logging.debug("\n%s" % game.to_string())
+        # logging.debug("\n%s" % game.to_string())
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
@@ -246,18 +246,26 @@ class CustomPlayer:
             return (self.score(game, self), (None, None))
 
         move = None
+        v = None
         if maximizing_player:
             v = float("-inf")
             for a in game.get_legal_moves():
-                logging.debug("\nMove (%s, %s)" % a)
-                updated_v = max(v, self.minimax(game.forecast_move(a), depth - 1, False)[0])
-                if updated_v > v:
+                logging.debug("\nMax: Move %s for player %s" % (a, game.active_player))
+                updated_v = max(v, self.alphabeta(game.forecast_move(a), depth - 1, alpha, beta, False)[0])
+                if updated_v >= beta:
+                    return (updated_v, a)
+                elif updated_v > v:
                     v, move = updated_v, a
+                alpha = max(alpha, v)
         else:
             v = float("inf")
             for a in game.get_legal_moves():
-                updated_v = min(v, self.minimax(game.forecast_move(a), depth - 1, True)[0])
-                if updated_v < v:
+                logging.debug("\nMin: Move %s for player %s" % (a, game.active_player))
+                updated_v = min(v, self.alphabeta(game.forecast_move(a), depth - 1, alpha, beta, True)[0])
+                if updated_v <= alpha:
+                    return (updated_v, a)
+                elif updated_v < v:
                     v, move = updated_v, a
+                beta = min(beta, v)
 
         return (v, move)
