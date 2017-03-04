@@ -9,7 +9,7 @@ relative strength using tournament.py and include the results in your report.
 import random
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 class Timeout(Exception):
@@ -138,14 +138,11 @@ class CustomPlayer:
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            
+            if not self.iterative:
+                return method(game, depth)[1]
             while True:
                 _, next_move = method(game, depth)
-                
                 depth = depth + 1
-                if not self.iterative:
-                    return next_move
-                 
             pass
 
         except Timeout:
