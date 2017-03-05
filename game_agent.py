@@ -126,23 +126,29 @@ class CustomPlayer:
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
+        if len(legal_moves) == 0: return (-1, -1)
+
         depth = 1
         method = None
+        move = legal_moves[0]
         if self.method == "minimax":
             method = self.minimax
         else:
             method = self.alphabeta
-        
+
+        logging.debug('##############################')
+
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
             if not self.iterative:
-                return method(game, depth)[1]
-            while True:
-                _, next_move = method(game, depth)
-                depth = depth + 1
+                _, move = method(game, depth)
+            else:
+                while True:
+                    score, move = method(game, depth)
+                    depth += 1
             pass
 
         except Timeout:
@@ -150,9 +156,8 @@ class CustomPlayer:
             pass
 
         # Return the best move from the last completed search iteration
-
         # logging.debug("Timeout: %s" % time_left)
-        # return next_move
+        return move
 
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
@@ -186,13 +191,13 @@ class CustomPlayer:
                 evaluation function directly.
         """
         # logging.debug("\n%s" % game.to_string())
+        if depth <= 0 or game.is_winner(game.active_player) or game.is_loser(game.active_player):
+            # logging.debug("\nScore %s for %s on depth %d %s" % (self.score(game, self), self, depth, (-1, -1)))
+            return self.score(game, self), (-1, -1)
+
         if self.time_left() < self.TIMER_THRESHOLD:
             logging.debug("Timeout minimax: %s" % self.time_left())
             raise Timeout()
-
-        if depth <= 0 or game.is_winner(game.active_player) or game.is_loser(game.active_player):
-#             logging.debug("\nScore %s for %s on depth %d" % (self.score(game, self), self, depth))
-            return (self.score(game, self), (-1, -1))
 
         move = None
         if maximizing_player:
