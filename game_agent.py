@@ -41,7 +41,23 @@ def custom_score(game, player):
     """
 
     # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    own_loc = game.get_player_location(player)
+    opp_loc = game.get_player_location(game.get_opponent(player))
+
+    manhattan_dist = abs(own_loc[0] - opp_loc[0]) + abs(own_loc[1] - opp_loc[1])
+
+    score = float((own_moves -  3 * opp_moves) * (1 / manhattan_dist))
+    # logging.info("Score: %f, own_loc %s, own_moves %d, opp_loc %s, opp_moves %d, manhattan_dist %f" % (score, own_loc, own_moves, opp_loc, opp_moves, manhattan_dist))
+    return score
 
 
 class CustomPlayer:
