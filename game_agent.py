@@ -50,13 +50,25 @@ def custom_score(game, player):
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
 
+    if (opp_moves == 0):
+        return float("inf")
+
     own_loc = game.get_player_location(player)
     opp_loc = game.get_player_location(game.get_opponent(player))
 
-    manhattan_dist = abs(own_loc[0] - opp_loc[0]) + abs(own_loc[1] - opp_loc[1])
+    dist = abs(own_loc[0] - opp_loc[0]) + abs(own_loc[1] - opp_loc[1])
+    total_moves_left = len(game.get_blank_spaces()) + .0000001 # ensure that total_moves_left will be .0000001 or greater
+    total_moves = game.height * game.width
 
-    score = float((own_moves -  3 * opp_moves) * (1 / manhattan_dist))
-    # logging.info("Score: %f, own_loc %s, own_moves %d, opp_loc %s, opp_moves %d, manhattan_dist %f" % (score, own_loc, own_moves, opp_loc, opp_moves, manhattan_dist))
+    game_progress = total_moves_left / total_moves
+    minimaze_opp_moves = (own_moves - 3 * opp_moves)
+
+    if (own_moves >= opp_moves):
+        # try to capture opponent :)
+        dist = 1 / dist
+
+    score = float(minimaze_opp_moves * (dist / game_progress))
+    # logging.info("Score: %f, own_loc %s, own_moves %d, opp_loc %s, opp_moves %d, dist %f" % (score, own_loc, own_moves, opp_loc, opp_moves, dist))
     return score
 
 
